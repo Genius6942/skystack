@@ -167,7 +167,7 @@ class Block {
   }
 }
 
-let botMode = true;
+let botMode = false;
 
 window.addEventListener("keydown", e => {
 	if (botMode) {

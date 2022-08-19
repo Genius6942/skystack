@@ -88,9 +88,14 @@ class Block {
   draw() {
     ctx.fillStyle = "#444444";
 
-		const center = skyscraper[0] ? skyscraper[0].x + skyscraper[0].width / 2 : canvas.width / 2;
+    const center = skyscraper[0] ? skyscraper[0].x + skyscraper[0].width / 2 : canvas.width / 2;
 
-		const { x, y, width, height } = { x: center - (center - this.x) * currentScale, y: canvas.height - (canvas.height - this.y) * currentScale + transformUp, width: this.width * currentScale, height: this.height * currentScale };
+    const { x, y, width, height } = {
+      x: center - (center - this.x) * currentScale,
+      y: canvas.height - (canvas.height - this.y) * currentScale + transformUp,
+      width: this.width * currentScale,
+      height: this.height * currentScale,
+    };
 
     ctx.fillRect(x, y, width, height);
 
@@ -99,7 +104,7 @@ class Block {
       for (let i = 0; i < this.windows; i++) {
         ctx.fillRect(
           x + i * (Constants.windowWidth + this.windowGap) * currentScale + this.windowGap * currentScale,
-          y + (this.height - Constants.windowHeight) / 2 * currentScale,
+          y + ((this.height - Constants.windowHeight) / 2) * currentScale,
           Constants.windowWidth * currentScale,
           Constants.windowHeight * currentScale
         );
@@ -170,11 +175,11 @@ class Block {
 let botMode = false;
 
 window.addEventListener("keydown", e => {
-	if (botMode) {
-		botMode = false;
-		return;
-	}
-	
+  if (botMode) {
+    botMode = false;
+    return;
+  }
+
   if (e.key === " ") {
     dropping.drop();
   }
@@ -201,20 +206,22 @@ let currentScale = 1;
 const render = () => {
   let continueRendering = true;
 
-	ctx.clearRect(0, 0, canvas.width * (1 / currentScale), canvas.height * (1 / currentScale));
+  ctx.clearRect(0, 0, canvas.width * (1 / currentScale), canvas.height * (1 / currentScale));
 
   if (gameOver) {
     // zoom out to fit whole skyscraper
     if (transformUp > 0) {
       transformUp -= finalTransformUp / 50;
 
-			let targetScale = Math.min(1, window.innerHeight / 3 * 2 / (finalTransformUp + Constants.blockHeight * Math.min(skyscraper.length, 6)));
-			
-			currentScale += (targetScale - 1) / 50;
+      let targetScale = Math.min(
+        1,
+        ((window.innerHeight / 3) * 2) /
+          (finalTransformUp + Constants.blockHeight * Math.min(skyscraper.length, 6))
+      );
 
-			console.log(currentScale);
+      currentScale += (targetScale - 1) / 50;
 
-
+      console.log(currentScale);
     }
   } else {
     if (dropping.update()) {
@@ -242,18 +249,25 @@ const render = () => {
       transformUp += 1;
     }
 
-		if (botMode) {
-			if (skyscraper[skyscraper.length - 1] && Math.abs(dropping.x - skyscraper[skyscraper.length - 1].x) <= Constants.moveSpeed) {
-				dropping.drop();
-			} else if (!skyscraper[skyscraper.length - 1] && dropping.x > canvas.width / 2) {
-				dropping.drop();
-			}
-		}
+    if (botMode) {
+      if (
+        skyscraper[skyscraper.length - 1] &&
+        Math.abs(dropping.x - skyscraper[skyscraper.length - 1].x) <= Constants.moveSpeed
+      ) {
+        dropping.drop();
+      } else if (!skyscraper[skyscraper.length - 1] && dropping.x > canvas.width / 2) {
+        dropping.drop();
+      }
+    }
   }
 
   skyscraper.forEach(block => {
     block.draw();
   });
+
+  ctx.fillStyle = "black";
+  ctx.font = "50px Arial";
+  ctx.fillText(score, canvas.width / 2, 50);
 
   continueRendering && requestAnimationFrame(render);
 };

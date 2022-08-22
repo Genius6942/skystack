@@ -7,7 +7,44 @@
     <title>Sky Stack</title>
   </head>
   <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
+    <div id="start" class="fixed flex items-center justify-center inset-0 w-screen h-screen bg-white z-10">
+      <div class="rounded-3xl p-10 shadow-2xl">
+        <div class="text-center font-bold text-4xl">Sky Stack</div>
+        <div class="flex max-h-[300px]">
+          <div class="grow flex flex-col">
+						<div class="text-xl mt-10">
+							Stack your skyscraper as high as you can!<br/>
+							Use the spacebar, tap, or click to drop a block.<br/>
+							Try to match it up with the block below!<br/>
+							Each added block gives you 1 point.<br/>
+						</div>
+
+						<div class="grow flex justify-center items-center">
+							<button id="play" class="shadow-xl bg-gray-500 text-yellow-300 font-bold text-2xl p-10 rounded-3xl hover:scale-110 transition-all hover:shadow-2xl">Play!</button>
+						</div>
+					</div>
+          <img src="/preview.png" alt="preview of game" class="object-contain" />
+        </div>
+      </div>
+    </div>
+		<div id="end" class="fixed hidden items-center justify-center inset-0 w-screen h-screen bg-white z-10">
+      <div class="rounded-3xl p-10 shadow-2xl">
+        <div class="text-center font-bold text-4xl">You Died.</div>
+        <div class="flex max-h-[300px]">
+          <div class="grow flex flex-col">
+						<div class="text-xl mt-10">
+							Your score was: <span id="score"></span><br/>
+							Your high score is: <span id="highscore"></span><br/><br/>
+						</div>
+
+						<div class="grow flex justify-center items-center">
+							<button onclick='history.go(0);' class="shadow-xl bg-gray-500 text-yellow-300 font-bold text-2xl p-10 rounded-3xl hover:scale-110 transition-all hover:shadow-2xl">Play again</button>
+						</div>
+					</div>
+          <!-- <img src="/preview.png" alt="preview of game" class="object-contain" /> -->
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/index.js"></script>
   </body>
 </html>

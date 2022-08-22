@@ -1,5 +1,7 @@
 import "../styles/style.css";
 
+import { end } from "./index";
+
 const canvas = document.createElement("canvas");
 document.body.appendChild(canvas);
 canvas.id = "game";
@@ -12,6 +14,9 @@ const resize = () => {
 };
 
 window.addEventListener("resize", resize);
+
+let highScore = parseInt(localStorage.getItem("highScore")) || 0;
+
 resize();
 
 let transformUp = 0;
@@ -46,14 +51,46 @@ const mobile = (function (a) {
 })(navigator.userAgent || navigator.vendor || window.opera);
 
 if (mobile) {
-	console.log('mobile');
+  console.log("mobile");
 
-	Constants.blockHeight /= 2;
-	Constants.moveSpeed /= 2;
-	Constants.startingWidth /= 2;
-	Constants.windowWidth /= 2;
-	Constants.windowHeight /= 2;
-	Constants.minWindowGap /= 2;
+  Constants.blockHeight /= 2;
+  Constants.moveSpeed /= 2;
+  Constants.startingWidth /= 2;
+  Constants.windowWidth /= 2;
+  Constants.windowHeight /= 2;
+  Constants.minWindowGap /= 2;
+  Constants.dropHeight /= 2;
+
+  canvas.addEventListener("touchstart", canvas.requestFullscreen);
+}
+
+/**
+ * @type {FadingText[]}
+ */
+let fadingTexts = [];
+
+class FadingText {
+  constructor(text, x, y, align) {
+    this.text = text;
+    this.x = x;
+    this.y = y;
+    this.align = align;
+    this.opacity = 1;
+  }
+
+  draw() {
+    ctx.globalAlpha = this.opacity;
+    ctx.font = "20px Arial";
+    ctx.textAlign = this.align;
+    ctx.fillStyle = "black";
+    ctx.fillText(this.text, this.x, this.y + transformUp);
+    ctx.globalAlpha = 1;
+  }
+
+  update() {
+    this.opacity -= Constants.fadeSpeed;
+    this.y -= Constants.fadeSpeed * 20;
+  }
 }
 
 /**
@@ -158,6 +195,8 @@ class Block {
             fadingBlocks.push(new FadingBlock(this.x, this.y, lastBlock.x - this.x, this.height));
 
             this.x = lastBlock.x;
+
+            score++;
           } else if (this.x + this.width > lastBlock.x + lastBlock.width) {
             this.width = Math.max(lastBlock.width - (this.x - lastBlock.x), 0);
 
@@ -170,16 +209,19 @@ class Block {
             );
 
             this.x = lastBlock.x + lastBlock.width - this.width;
+
+            score++;
           } else {
             console.log("pefect!");
+            fadingTexts.push(new FadingText("Perfect!", this.x + this.width, this.y, "left"));
           }
+        } else {
+          score++;
         }
 
         skyscraper.push(this);
 
         dropping = new Block();
-
-        score++;
 
         this.windows = Math.floor(
           (this.width - Constants.minWindowGap) / (Constants.windowWidth + Constants.minWindowGap)
@@ -213,10 +255,6 @@ const drop = e => {
   }
 };
 
-window.addEventListener("keydown", drop);
-window.addEventListener("mousedown", drop);
-window.addEventListener("touchstart", drop);
-
 /**
  * @type {Block[]}
  */
@@ -239,6 +277,9 @@ let { innerHeight: height, innerWidth: width } = window;
 
 let rendering = true;
 
+const endFrames = 50;
+let endFrameCount = 0;
+
 const render = () => {
   let continueRendering = true;
 
@@ -247,7 +288,7 @@ const render = () => {
   if (gameOver) {
     // zoom out to fit whole skyscraper
     if (transformUp > 0) {
-      transformUp -= finalTransformUp / 50;
+      transformUp -= finalTransformUp / endFrames;
 
       let targetScale = Math.min(
         1,
@@ -255,9 +296,20 @@ const render = () => {
           (finalTransformUp + Constants.blockHeight * Math.min(skyscraper.length, 6))
       );
 
-      currentScale += (targetScale - 1) / 50;
+      currentScale += (targetScale - 1) / endFrames;
+    }
 
-      console.log(currentScale);
+    endFrameCount++;
+
+    if (endFrameCount > endFrames) {
+      continueRendering = false;
+
+      end(score);
+
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem("highScore", highScore);
+      }
     }
   } else {
     if (dropping.update()) {
@@ -270,18 +322,7 @@ const render = () => {
       endGame();
     }
 
-    fadingBlocks.forEach(block => {
-      block.update();
-      block.draw();
-    });
-
-    fadingBlocks = fadingBlocks.filter(block => block.opacity > 0);
-
-    ctx.fillStyle = "black";
-    ctx.font = "50px Arial";
-    ctx.fillText(score, canvas.width / 2, 50);
-
-    if (transformUp < Constants.blockHeight * (skyscraper.length - 6)) {
+    if (transformUp < Constants.blockHeight * (skyscraper.length - (mobile ? 4 : 6))) {
       transformUp += 1;
     }
 
@@ -297,30 +338,72 @@ const render = () => {
     }
   }
 
+  // draw highscore line
+  ctx.setLineDash([10, 10]);
+  ctx.strokeStyle = "black";
+  ctx.beginPath();
+  ctx.moveTo(0, canvas.height + transformUp - Constants.blockHeight * highScore * currentScale);
+  ctx.lineTo(canvas.width, canvas.height + transformUp - Constants.blockHeight * highScore * currentScale);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = "black";
+  ctx.font = "20px Arial";
+  ctx.textAlign = "right";
+  ctx.fillText(
+    "highscore: " + highScore,
+    canvas.width - 15,
+    canvas.height + transformUp - Constants.blockHeight * highScore * currentScale + 30
+  );
+
   skyscraper.forEach(block => {
     block.draw();
   });
 
+  fadingBlocks.forEach(block => {
+    block.update();
+    block.draw();
+  });
+
+  fadingBlocks = fadingBlocks.filter(block => block.opacity > 0);
+
+  fadingTexts.forEach(text => {
+    text.update();
+    text.draw();
+  });
+
+  fadingTexts = fadingTexts.filter(text => text.opacity > 0);
+
   ctx.fillStyle = "black";
   ctx.font = "50px Arial";
+  ctx.textAlign = "center";
   ctx.fillText(score, canvas.width / 2, 50);
 
-	if (height > width) {
-		continueRendering = false;
-		rendering = false;
-	}
+  if (height > width) {
+    continueRendering = false;
+    rendering = false;
+  }
 
   continueRendering && requestAnimationFrame(render);
 };
 
-render();
+const start = () => {
+  render();
 
-window.addEventListener('resize', () => {
-	height = window.innerHeight;
-	width = window.innerWidth;
+  window.addEventListener("resize", () => {
+    height = window.innerHeight;
+    width = window.innerWidth;
 
-	if (height <= width && !rendering) {
-		render();
-		rendering = true;
-	}
-});
+    if (height <= width && !rendering) {
+      render();
+      rendering = true;
+    }
+  });
+
+  window.addEventListener("keydown", drop);
+  window.addEventListener("mousedown", drop);
+  window.addEventListener("touchstart", drop);
+};
+
+export { start, mobile };
+
+// TODO: perfect animation

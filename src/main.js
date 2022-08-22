@@ -61,7 +61,9 @@ if (mobile) {
   Constants.minWindowGap /= 2;
   Constants.dropHeight /= 2;
 
-  canvas.addEventListener("touchstart", canvas.requestFullscreen);
+  canvas.addEventListener("touchstart", () => {
+		canvas.requestFullscreen();
+	});
 }
 
 /**

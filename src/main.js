@@ -303,7 +303,7 @@ const render = () => {
 
     endFrameCount++;
 
-    if (endFrameCount > endFrames) {
+    if (endFrameCount > endFrames + 180) {
       continueRendering = false;
 
       end(score);
